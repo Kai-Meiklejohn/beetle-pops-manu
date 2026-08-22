@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <SFML/Graphics.hpp>
 
 int main()
@@ -33,6 +34,20 @@ int main()
 			shape.move({ movementSpeed * deltaTime, 0.f });
 		}
 
+		// Clamp the shape's position to stay within the window bounds
+		auto position = shape.getPosition();
+		
+		const float circleDiameter{ shape.getRadius() * 2.f };
+
+		const float maximumX{
+			static_cast<float>(window.getSize().x) - circleDiameter
+		};
+
+		position.x = std::clamp(position.x, 0.f, maximumX);
+
+		shape.setPosition(position);
+
+		// Render the shape
 		window.clear();
 		window.draw( shape );
 		window.display();
