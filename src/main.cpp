@@ -14,6 +14,15 @@ int main()
 				window.close();
 		}
 
+		// Handle keyboard input to move the shape
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left)) {
+			shape.move({ -1.f, 0.f });
+		}
+
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right)) {
+			shape.move({ 1.f, 0.f });
+		}
+
 		window.clear();
 		window.draw( shape );
 		window.display();
