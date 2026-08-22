@@ -14,6 +14,9 @@ int main()
 	sf::Clock clock;
 	constexpr float movementSpeed{ 200.f };
 
+	float verticalVelocity{ 0.f };
+
+	constexpr float gravity{ 1200.f };
 
 	while ( window.isOpen() )
 	{
@@ -34,6 +37,14 @@ int main()
 			shape.move({ movementSpeed * deltaTime, 0.f });
 		}
 
+		// Apply gravity to the vertical velocity
+		verticalVelocity += gravity * deltaTime;
+
+		shape.move({
+			0.f,
+			verticalVelocity * deltaTime
+		});
+
 		// Clamp the shape's position to stay within the window bounds
 		auto position = shape.getPosition();
 		
@@ -43,7 +54,17 @@ int main()
 			static_cast<float>(window.getSize().x) - circleDiameter
 		};
 
+		const float maximumY{
+			static_cast<float>(window.getSize().y) - circleDiameter
+		};
+
 		position.x = std::clamp(position.x, 0.f, maximumX);
+
+		if (position.y > maximumY)
+		{
+			position.y = maximumY;
+			verticalVelocity = 0.f;
+		}
 
 		shape.setPosition(position);
 
