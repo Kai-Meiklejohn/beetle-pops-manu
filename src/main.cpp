@@ -3,29 +3,49 @@
 
 int main()
 {
+	// Create a window with the specified size and title
 	sf::RenderWindow window(
 		sf::VideoMode({ 800, 600 }),
 		"Beetle Pops a Manu!"
 	);
 
+	// Disable key repeat to prevent continuous movement when holding down a key
+	window.setKeyRepeatEnabled(false);
+
+	// Create a circle shape with a radius of 25 pixels and set its fill color to green
 	sf::CircleShape shape{ 25.f };
 	shape.setFillColor( sf::Color::Green );
 
+	// Set the initial position of the shape to the center of the window
 	sf::Clock clock;
-	constexpr float movementSpeed{ 200.f };
 
 	float verticalVelocity{ 0.f };
+	bool isGrounded{ false };
 
+	constexpr float movementSpeed{ 200.f };
 	constexpr float gravity{ 1200.f };
+	constexpr float jumpSpeed{ 500.f };
 
 	while ( window.isOpen() )
 	{
 		const float deltaTime{ clock.restart().asSeconds() };
 
+		// Handle window events
 		while ( const std::optional event = window.pollEvent() )
 		{
 			if ( event->is<sf::Event::Closed>() )
 				window.close();
+
+			if (const auto* keyPressed =
+				event->getIf<sf::Event::KeyPressed>())
+			{
+				if (keyPressed->code == sf::Keyboard::Key::Space &&
+					isGrounded)
+				{
+					verticalVelocity = -jumpSpeed;
+					isGrounded = false;
+				}
+			}
 		}
 
 		// Handle keyboard input to move the shape
@@ -60,10 +80,14 @@ int main()
 
 		position.x = std::clamp(position.x, 0.f, maximumX);
 
-		if (position.y > maximumY)
+		isGrounded = false;
+
+		// Clamp the shape's vertical position and handle ground collision
+		if (position.y >= maximumY)
 		{
 			position.y = maximumY;
 			verticalVelocity = 0.f;
+			isGrounded = true;
 		}
 
 		shape.setPosition(position);
