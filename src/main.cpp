@@ -39,7 +39,7 @@ int main()
 			if (const auto* keyPressed =
 				event->getIf<sf::Event::KeyPressed>())
 			{
-				if (keyPressed->code == sf::Keyboard::Key::Space &&
+				if ((keyPressed->code == sf::Keyboard::Key::Space || keyPressed->code == sf::Keyboard::Key::Up) &&
 					isGrounded)
 				{
 					verticalVelocity = -jumpSpeed;
