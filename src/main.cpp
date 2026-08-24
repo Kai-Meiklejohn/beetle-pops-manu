@@ -9,15 +9,15 @@ int main()
 		"Beetle Pops a Manu!"
 	);
 
-	// Disable key repeat to prevent continuous movement when holding down a key
+	// Prevent held keys from generating repeated KeyPressed events
 	window.setKeyRepeatEnabled(false);
 
 	// Create a circle shape with a radius of 25 pixels and set its fill color to green
 	sf::CircleShape shape{ 25.f };
 	shape.setFillColor( sf::Color::Green );
 
-	// Set the initial position of the shape to the center of the window
-	sf::Clock clock;
+	// Track elapsed time for frame-rate-independent movement
+	sf::Clock clock;;
 
 	float verticalVelocity{ 0.f };
 	bool isGrounded{ false };
@@ -37,9 +37,10 @@ int main()
 				window.close();
 
 			if (const auto* keyPressed =
-				event->getIf<sf::Event::KeyPressed>())
+				event->getIf<sf::Event::KeyPressed>()) // Check if the event is a KeyPressed event
 			{
-				if ((keyPressed->code == sf::Keyboard::Key::Space || keyPressed->code == sf::Keyboard::Key::Up) &&
+				if ((keyPressed->code == sf::Keyboard::Key::Space ||
+					keyPressed->code == sf::Keyboard::Key::Up) &&
 					isGrounded)
 				{
 					verticalVelocity = -jumpSpeed;
