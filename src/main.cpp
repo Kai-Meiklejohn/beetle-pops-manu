@@ -16,7 +16,7 @@ int main()
 	sf::CircleShape shape{ 25.f };
 	shape.setFillColor( sf::Color::Green );
 
-	// Create a platform with the specified size and set its fill color to red
+	// Create a platform with the specified size and set its fill color to blue
 	sf::RectangleShape platform{ { 200.f, 20.f } };
 	platform.setPosition({ 300.f, 510.f });
 	platform.setFillColor(sf::Color::Blue);
