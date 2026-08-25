@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <vector>
 #include <SFML/Graphics.hpp>
 
 int main()
@@ -16,10 +17,20 @@ int main()
 	sf::CircleShape shape{ 25.f };
 	shape.setFillColor( sf::Color::Green );
 
-	// Create a platform with the specified size and set its fill color to blue
-	sf::RectangleShape platform{ { 200.f, 20.f } };
-	platform.setPosition({ 300.f, 510.f });
-	platform.setFillColor(sf::Color::Blue);
+	// Create a rectangle shape to represent the platform
+	std::vector<sf::RectangleShape> platforms;
+
+	platforms.emplace_back(sf::Vector2f{ 180.f, 20.f });
+	platforms.back().setPosition({ 100.f, 330.f });
+	platforms.back().setFillColor(sf::Color::Blue);
+
+	platforms.emplace_back(sf::Vector2f{ 180.f, 20.f });
+	platforms.back().setPosition({ 350.f, 420.f });
+	platforms.back().setFillColor(sf::Color::Blue);
+
+	platforms.emplace_back(sf::Vector2f{ 200.f, 20.f });
+	platforms.back().setPosition({ 100.f, 510.f });
+	platforms.back().setFillColor(sf::Color::Blue);
 
 	// Track elapsed time for frame-rate-independent movement
 	sf::Clock clock;
@@ -90,11 +101,7 @@ int main()
 
 		position.x = std::clamp(position.x, 0.f, maximumX);
 
-
-		// Check for collision with the platform
-		const auto platformPosition = platform.getPosition();
-		const auto platformSize = platform.getSize();
-
+		// This records where the player’s right and bottom are after horizontal movement.
 		const float playerRight{
 			position.x + circleDiameter
 		};
@@ -103,32 +110,37 @@ int main()
 			position.y + circleDiameter
 		};
 
-		const float platformRight{
-			platformPosition.x + platformSize.x
-		};
-
-		// Checks whether the player is above some portion of the platform.
-		const bool overlapsHorizontally{
-			playerRight > platformPosition.x &&
-			position.x < platformRight
-		};
-
-		// Checks whether the player moved from above the platform’s top to below it during this frame.
-		const bool crossedPlatformTop{
-			previousBottom <= platformPosition.y &&
-			playerBottom >= platformPosition.y
-		};
-
 		isGrounded = false;
 
 		// Platform collision detection and response
-		if (verticalVelocity >= 0.f &&
-			overlapsHorizontally &&
-			crossedPlatformTop)
+		for (const auto& platform : platforms)
 		{
-			position.y = platformPosition.y - circleDiameter;
-			verticalVelocity = 0.f;
-			isGrounded = true;
+			const auto platformPosition = platform.getPosition();
+			const auto platformSize = platform.getSize();
+
+			const float platformRight{
+				platformPosition.x + platformSize.x
+			};
+
+			const bool overlapsHorizontally{
+				playerRight > platformPosition.x &&
+				position.x < platformRight
+			};
+
+			const bool crossedPlatformTop{
+				previousBottom <= platformPosition.y &&
+				playerBottom >= platformPosition.y
+			};
+
+			if (verticalVelocity >= 0.f &&
+				overlapsHorizontally &&
+				crossedPlatformTop)
+			{
+				position.y = platformPosition.y - circleDiameter;
+				verticalVelocity = 0.f;
+				isGrounded = true;
+				break;
+			}
 		}
 
 		// Clamp the shape's vertical position and handle ground collision
@@ -141,9 +153,14 @@ int main()
 
 		shape.setPosition(position);
 
-		// Render the shape
+		// Render the scene
 		window.clear();
-		window.draw( platform );
+
+		for (const auto& platform : platforms)
+		{
+			window.draw(platform);
+		}
+
 		window.draw( shape );
 		window.display();
 	}
