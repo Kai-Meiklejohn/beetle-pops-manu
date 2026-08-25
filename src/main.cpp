@@ -101,7 +101,7 @@ int main()
 
 		position.x = std::clamp(position.x, 0.f, maximumX);
 
-		// This records where the player’s right and bottom are after horizontal movement.
+		// Calculate the player's edges after movement.
 		const float playerRight{
 			position.x + circleDiameter
 		};
@@ -115,23 +115,30 @@ int main()
 		// Platform collision detection and response
 		for (const auto& platform : platforms)
 		{
+			// Get the platform's position and size
 			const auto platformPosition = platform.getPosition();
 			const auto platformSize = platform.getSize();
 
+			// Calculate the right edge of the platform
 			const float platformRight{
 				platformPosition.x + platformSize.x
 			};
 
+			// Check if the player overlaps with the platform horizontally
 			const bool overlapsHorizontally{
 				playerRight > platformPosition.x &&
 				position.x < platformRight
 			};
 
+			// Check if the player has crossed the top of the platform
 			const bool crossedPlatformTop{
 				previousBottom <= platformPosition.y &&
 				playerBottom >= platformPosition.y
 			};
 
+			// If the player is moving downwards, overlaps horizontally with the platform, 
+			// and has crossed the top of the platform, 
+			// snap the player to the top of the platform and reset vertical velocity
 			if (verticalVelocity >= 0.f &&
 				overlapsHorizontally &&
 				crossedPlatformTop)
