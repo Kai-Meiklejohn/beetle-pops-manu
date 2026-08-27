@@ -52,7 +52,7 @@ void Player::update(
 		shape_.move({
 			-movementSpeed_ * deltaTime,
 			0.f
-			});
+		});
 	}
 
 	// Handle continuous right movement while the key is held
@@ -61,7 +61,7 @@ void Player::update(
 		shape_.move({
 			movementSpeed_ * deltaTime,
 			0.f
-			});
+		});
 	}
 
 	// Calculate the player's full width and height
@@ -81,7 +81,7 @@ void Player::update(
 	shape_.move({
 		0.f,
 		verticalVelocity_ * deltaTime
-		});
+	});
 
 	// Get a copy of the player's new position after movement
 	auto position{ shape_.getPosition() };
