@@ -1,6 +1,8 @@
-#include <algorithm>
+#include <optional>
 #include <vector>
 #include <SFML/Graphics.hpp>
+
+#include "Player.hpp"
 
 int main()
 {
@@ -13,21 +15,23 @@ int main()
 	// Prevent held keys from generating repeated KeyPressed events
 	window.setKeyRepeatEnabled(false);
 
-	// Create a circle shape with a radius of 25 pixels and set its fill color to green
-	sf::CircleShape shape{ 25.f };
-	shape.setFillColor( sf::Color::Green );
+	// Create the player object
+	Player player;
 
-	// Create a rectangle shape to represent the platform
+	// Create a vector containing the platforms in the level
 	std::vector<sf::RectangleShape> platforms;
 
+	// Create and configure the first platform
 	platforms.emplace_back(sf::Vector2f{ 180.f, 20.f });
 	platforms.back().setPosition({ 100.f, 330.f });
 	platforms.back().setFillColor(sf::Color::Blue);
 
+	// Create and configure the second platform
 	platforms.emplace_back(sf::Vector2f{ 180.f, 20.f });
 	platforms.back().setPosition({ 350.f, 420.f });
 	platforms.back().setFillColor(sf::Color::Blue);
 
+	// Create and configure the third platform
 	platforms.emplace_back(sf::Vector2f{ 200.f, 20.f });
 	platforms.back().setPosition({ 100.f, 510.f });
 	platforms.back().setFillColor(sf::Color::Blue);
@@ -35,140 +39,47 @@ int main()
 	// Track elapsed time for frame-rate-independent movement
 	sf::Clock clock;
 
-	float verticalVelocity{ 0.f };
-	bool isGrounded{ false };
-
-	const float circleDiameter{ shape.getRadius() * 2.f };
-	constexpr float movementSpeed{ 200.f };
-	constexpr float gravity{ 1200.f };
-	constexpr float jumpSpeed{ 500.f };
-
-	while ( window.isOpen() )
+	// Continue running until the window is closed
+	while (window.isOpen())
 	{
-		const float deltaTime{ clock.restart().asSeconds() };
+		// Measure the number of seconds since the previous frame
+		const float deltaTime{
+			clock.restart().asSeconds()
+		};
 
-		// Handle window events
-		while ( const std::optional event = window.pollEvent() )
+		// Process every event that has occurred since the previous frame
+		while (const std::optional event = window.pollEvent())
 		{
-			if ( event->is<sf::Event::Closed>() )
+			// Close the window when the user presses its close button
+			if (event->is<sf::Event::Closed>())
+			{
 				window.close();
-
-			if (const auto* keyPressed =
-				event->getIf<sf::Event::KeyPressed>()) // Check if the event is a KeyPressed event
-			{
-				if ((keyPressed->code == sf::Keyboard::Key::Space ||
-					keyPressed->code == sf::Keyboard::Key::Up) &&
-					isGrounded)
-				{
-					verticalVelocity = -jumpSpeed;
-					isGrounded = false;
-				}
 			}
+
+			// Give the player an opportunity to handle this event
+			player.handleEvent(*event);
 		}
 
-		// Handle keyboard input to move the shape
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left)) {
-			shape.move({ -movementSpeed * deltaTime, 0.f });
-		}
+		// Update the player's movement, physics, and collisions
+		player.update(
+			deltaTime,
+			platforms,
+			window.getSize()
+		);
 
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right)) {
-			shape.move({ movementSpeed * deltaTime, 0.f });
-		}
-
-		// This records where the player’s bottom was before vertical movement.
-		const float previousBottom{
-			shape.getPosition().y + circleDiameter
-		};
-
-		// Apply gravity to the vertical velocity
-		verticalVelocity += gravity * deltaTime;
-
-		shape.move({
-			0.f,
-			verticalVelocity * deltaTime
-		});
-
-		// Clamp the shape's position to stay within the window bounds
-		auto position = shape.getPosition();
-		
-		const float maximumX{
-			static_cast<float>(window.getSize().x) - circleDiameter
-		};
-
-		const float maximumY{
-			static_cast<float>(window.getSize().y) - circleDiameter
-		};
-
-		position.x = std::clamp(position.x, 0.f, maximumX);
-
-		// Calculate the player's edges after movement.
-		const float playerRight{
-			position.x + circleDiameter
-		};
-
-		const float playerBottom{
-			position.y + circleDiameter
-		};
-
-		isGrounded = false;
-
-		// Platform collision detection and response
-		for (const auto& platform : platforms)
-		{
-			// Get the platform's position and size
-			const auto platformPosition = platform.getPosition();
-			const auto platformSize = platform.getSize();
-
-			// Calculate the right edge of the platform
-			const float platformRight{
-				platformPosition.x + platformSize.x
-			};
-
-			// Check if the player overlaps with the platform horizontally
-			const bool overlapsHorizontally{
-				playerRight > platformPosition.x &&
-				position.x < platformRight
-			};
-
-			// Check if the player has crossed the top of the platform
-			const bool crossedPlatformTop{
-				previousBottom <= platformPosition.y &&
-				playerBottom >= platformPosition.y
-			};
-
-			// If the player is moving downwards, overlaps horizontally with the platform, 
-			// and has crossed the top of the platform, 
-			// snap the player to the top of the platform and reset vertical velocity
-			if (verticalVelocity >= 0.f &&
-				overlapsHorizontally &&
-				crossedPlatformTop)
-			{
-				position.y = platformPosition.y - circleDiameter;
-				verticalVelocity = 0.f;
-				isGrounded = true;
-				break;
-			}
-		}
-
-		// Clamp the shape's vertical position and handle ground collision
-		if (position.y >= maximumY)
-		{
-			position.y = maximumY;
-			verticalVelocity = 0.f;
-			isGrounded = true;
-		}
-
-		shape.setPosition(position);
-
-		// Render the scene
+		// Clear everything drawn during the previous frame
 		window.clear();
 
+		// Draw every platform in the level
 		for (const auto& platform : platforms)
 		{
 			window.draw(platform);
 		}
 
-		window.draw( shape );
+		// Draw the player after drawing the platforms
+		player.draw(window);
+
+		// Display the completed frame
 		window.display();
 	}
 }
