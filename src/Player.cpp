@@ -179,3 +179,9 @@ void Player::draw(sf::RenderWindow& window) const
 {
 	window.draw(shape_);
 }
+
+// Return the player's bounds for collision checks
+sf::FloatRect Player::getBounds() const
+{
+	return shape_.getGlobalBounds();
+}

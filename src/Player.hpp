@@ -24,6 +24,9 @@ public:
 	// Draw the player without changing it
 	void draw(sf::RenderWindow& window) const;
 
+	// Return the rectangular area currently occupied by the player
+	sf::FloatRect getBounds() const;
+
 private:
 	// The SFML shape currently used to represent the player
 	sf::CircleShape shape_;

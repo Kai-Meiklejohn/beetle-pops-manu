@@ -18,6 +18,14 @@ int main()
 	// Create the player object
 	Player player;
 
+	// Create a small yellow circle to represent a collectible
+	sf::CircleShape collectible{ 10.f };
+	collectible.setPosition({ 430.f, 400.f });
+	collectible.setFillColor(sf::Color::Yellow);
+
+	// Record whether the player has already collected it
+	bool collectibleCollected{ false };
+
 	// Create a vector containing the platforms in the level
 	std::vector<sf::RectangleShape> platforms;
 
@@ -67,6 +75,24 @@ int main()
 			window.getSize()
 		);
 
+		// Check for collision only while the collectible still exists
+		if (!collectibleCollected)
+		{
+			// Look for an overlapping area between the player and collectible
+			const auto intersection{
+				player.getBounds().findIntersection(
+					collectible.getGlobalBounds()
+				)
+			};
+
+			// If an overlapping area exists, collect the item
+			if (intersection.has_value())
+			{
+				collectibleCollected = true;
+			}
+		}
+		
+
 		// Clear everything drawn during the previous frame
 		window.clear();
 
@@ -74,6 +100,12 @@ int main()
 		for (const auto& platform : platforms)
 		{
 			window.draw(platform);
+		}
+
+		// Draw the collectible only if it has not been collected
+		if (!collectibleCollected)
+		{
+			window.draw(collectible);
 		}
 
 		// Draw the player after drawing the platforms
