@@ -18,13 +18,23 @@ int main()
 	// Create the player object
 	Player player;
 
-	// Create a small yellow circle to represent a collectible
-	sf::CircleShape collectible{ 10.f };
-	collectible.setPosition({ 430.f, 400.f });
-	collectible.setFillColor(sf::Color::Yellow);
+	// Create a vector containing the collectibles in the level
+	std::vector<sf::CircleShape> collectibles;
 
-	// Record whether the player has already collected it
-	bool collectibleCollected{ false };
+	// Create a collectible on the first platform
+	collectibles.emplace_back(10.f);
+	collectibles.back().setPosition({ 150.f, 310.f });
+	collectibles.back().setFillColor(sf::Color::Yellow);
+
+	// Create a collectible on the second platform
+	collectibles.emplace_back(10.f);
+	collectibles.back().setPosition({ 430.f, 400.f });
+	collectibles.back().setFillColor(sf::Color::Yellow);
+
+	// Create a collectible on the third platform
+	collectibles.emplace_back(10.f);
+	collectibles.back().setPosition({ 180.f, 490.f });
+	collectibles.back().setFillColor(sf::Color::Yellow);
 
 	// Create a vector containing the platforms in the level
 	std::vector<sf::RectangleShape> platforms;
@@ -75,20 +85,28 @@ int main()
 			window.getSize()
 		);
 
-		// Check for collision only while the collectible still exists
-		if (!collectibleCollected)
+		// Start at the first collectible in the vector
+		auto iterator{ collectibles.begin() };
+
+		// Check every remaining collectible
+		while (iterator != collectibles.end())
 		{
-			// Look for an overlapping area between the player and collectible
+			// Check whether the player overlaps this collectible
 			const auto intersection{
 				player.getBounds().findIntersection(
-					collectible.getGlobalBounds()
+					iterator->getGlobalBounds()
 				)
 			};
 
-			// If an overlapping area exists, collect the item
 			if (intersection.has_value())
 			{
-				collectibleCollected = true;
+				// Remove the collected item and receive the next valid iterator
+				iterator = collectibles.erase(iterator);
+			}
+			else
+			{
+				// Move to the next collectible when nothing was erased
+				++iterator;
 			}
 		}
 		
@@ -102,8 +120,8 @@ int main()
 			window.draw(platform);
 		}
 
-		// Draw the collectible only if it has not been collected
-		if (!collectibleCollected)
+		// Draw every collectible that has not been collected
+		for (const auto& collectible : collectibles)
 		{
 			window.draw(collectible);
 		}
