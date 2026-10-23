@@ -6,6 +6,9 @@
 
 int main()
 {
+	// Record whether the player has completed the level
+	bool levelCompleted{ false };
+
 	// Create a window with the specified size and title
 	sf::RenderWindow window(
 		sf::VideoMode({ 800, 600 }),
@@ -74,45 +77,65 @@ int main()
 				window.close();
 			}
 
-			// Give the player an opportunity to handle this event
-			player.handleEvent(*event);
+			// Allow player input only while the level is still running
+			if (!levelCompleted)
+			{
+				player.handleEvent(*event);
+			}
 		}
 
-		// Update the player's movement, physics, and collisions
-		player.update(
-			deltaTime,
-			platforms,
-			window.getSize()
-		);
-
-		// Start at the first collectible in the vector
-		auto iterator{ collectibles.begin() };
-
-		// Check every remaining collectible
-		while (iterator != collectibles.end())
+		if (!levelCompleted)
 		{
-			// Check whether the player overlaps this collectible
-			const auto intersection{
-				player.getBounds().findIntersection(
-					iterator->getGlobalBounds()
-				)
-			};
 
-			if (intersection.has_value())
+			// Update the player's movement, physics, and collisions
+			player.update(
+				deltaTime,
+				platforms,
+				window.getSize()
+			);
+
+			// Start at the first collectible in the vector
+			auto iterator{ collectibles.begin() };
+
+			// Check every remaining collectible
+			while (iterator != collectibles.end())
 			{
-				// Remove the collected item and receive the next valid iterator
-				iterator = collectibles.erase(iterator);
+				// Check whether the player overlaps this collectible
+				const auto intersection{
+					player.getBounds().findIntersection(
+						iterator->getGlobalBounds()
+					)
+				};
+
+				if (intersection.has_value())
+				{
+					// Remove the collected item and receive the next valid iterator
+					iterator = collectibles.erase(iterator);
+				}
+				else
+				{
+					// Move to the next collectible when nothing was erased
+					++iterator;
+				}
 			}
-			else
+
+			// Complete the level once every collectible has been removed
+			if (collectibles.empty())
 			{
-				// Move to the next collectible when nothing was erased
-				++iterator;
+				levelCompleted = true;
+				window.setTitle("Level complete!");
 			}
 		}
-		
 
-		// Clear everything drawn during the previous frame
-		window.clear();
+		// Change the background colour after completing the level
+		if (levelCompleted)
+		{
+			window.clear(sf::Color{ 30, 80, 50 });
+		}
+		else
+		{
+			window.clear(sf::Color::Black);
+		}
 
 		// Draw every platform in the level
 		for (const auto& platform : platforms)
