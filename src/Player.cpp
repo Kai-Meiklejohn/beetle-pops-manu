@@ -174,6 +174,19 @@ void Player::update(
 	shape_.setPosition(position);
 }
 
+// Reset the player so the level can be played again
+void Player::reset()
+{
+	// Return to the original starting position
+	shape_.setPosition({ 0.f, 0.f });
+
+	// Remove any upward or downward movement
+	verticalVelocity_ = 0.f;
+
+	// The player starts in the air and must land before jumping
+	isGrounded_ = false;
+}
+
 // Draw the player's shape in the supplied window
 void Player::draw(sf::RenderWindow& window) const
 {

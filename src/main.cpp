@@ -4,6 +4,31 @@
 
 #include "Player.hpp"
 
+// Create and return the collectibles for a fresh level
+std::vector<sf::CircleShape> createCollectibles()
+{
+	// Store the collectibles created by this function
+	std::vector<sf::CircleShape> collectibles;
+
+	// Create a collectible on the first platform
+	collectibles.emplace_back(10.f);
+	collectibles.back().setPosition({ 150.f, 310.f });
+	collectibles.back().setFillColor(sf::Color::Yellow);
+
+	// Create a collectible on the second platform
+	collectibles.emplace_back(10.f);
+	collectibles.back().setPosition({ 430.f, 400.f });
+	collectibles.back().setFillColor(sf::Color::Yellow);
+
+	// Create a collectible on the third platform
+	collectibles.emplace_back(10.f);
+	collectibles.back().setPosition({ 180.f, 490.f });
+	collectibles.back().setFillColor(sf::Color::Yellow);
+
+	// Give the completed vector to the caller
+	return collectibles;
+}
+
 int main()
 {
 	// Record whether the player has completed the level
@@ -21,23 +46,10 @@ int main()
 	// Create the player object
 	Player player;
 
-	// Create a vector containing the collectibles in the level
-	std::vector<sf::CircleShape> collectibles;
-
-	// Create a collectible on the first platform
-	collectibles.emplace_back(10.f);
-	collectibles.back().setPosition({ 150.f, 310.f });
-	collectibles.back().setFillColor(sf::Color::Yellow);
-
-	// Create a collectible on the second platform
-	collectibles.emplace_back(10.f);
-	collectibles.back().setPosition({ 430.f, 400.f });
-	collectibles.back().setFillColor(sf::Color::Yellow);
-
-	// Create a collectible on the third platform
-	collectibles.emplace_back(10.f);
-	collectibles.back().setPosition({ 180.f, 490.f });
-	collectibles.back().setFillColor(sf::Color::Yellow);
+	// Create the collectibles for the initial level
+	std::vector<sf::CircleShape> collectibles{
+		createCollectibles()
+	};
 
 	// Create a vector containing the platforms in the level
 	std::vector<sf::RectangleShape> platforms;
@@ -75,6 +87,27 @@ int main()
 			if (event->is<sf::Event::Closed>())
 			{
 				window.close();
+			}
+
+			// Check whether this event represents a key being pressed
+			if (const auto* keyPressed =
+				event->getIf<sf::Event::KeyPressed>())
+			{
+				// Restart the level when R is pressed
+				if (keyPressed->code == sf::Keyboard::Key::R)
+				{
+					// Reset the player's position and physics
+					player.reset();
+
+					// Replace the remaining collectibles with a fresh set
+					collectibles = createCollectibles();
+
+					// Return the game to its playing state
+					levelCompleted = false;
+
+					// Restore the original window title
+					window.setTitle("Beetle Pops a Manu!");
+				}
 			}
 
 			// Allow player input only while the level is still running
@@ -156,3 +189,4 @@ int main()
 		window.display();
 	}
 }
+

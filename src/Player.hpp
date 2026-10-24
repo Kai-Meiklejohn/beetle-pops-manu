@@ -21,6 +21,9 @@ public:
 		sf::Vector2u windowSize
 	);
 
+	// Return the player to its initial position and movement state
+	void reset();
+
 	// Draw the player without changing it
 	void draw(sf::RenderWindow& window) const;
 
