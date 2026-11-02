@@ -29,10 +29,18 @@ std::vector<sf::CircleShape> createCollectibles()
 	return collectibles;
 }
 
+// Describe the possible states of the current level
+enum class GameState
+{
+	Playing,
+	Completed,
+	Dead
+};
+
 int main()
 {
-	// Record whether the player has completed the level
-	bool levelCompleted{ false };
+	// Start the level in its normal playing state
+	GameState gameState{ GameState::Playing };
 
 	// Create a window with the specified size and title
 	sf::RenderWindow window(
@@ -69,6 +77,11 @@ int main()
 	platforms.back().setPosition({ 100.f, 510.f });
 	platforms.back().setFillColor(sf::Color::Blue);
 
+	// Create a dangerous area on the floor
+	sf::RectangleShape hazard{ { 120.f, 20.f } };
+	hazard.setPosition({ 350.f, 580.f });
+	hazard.setFillColor(sf::Color::Red);
+
 	// Track elapsed time for frame-rate-independent movement
 	sf::Clock clock;
 
@@ -103,7 +116,7 @@ int main()
 					collectibles = createCollectibles();
 
 					// Return the game to its playing state
-					levelCompleted = false;
+					gameState = GameState::Playing;
 
 					// Restore the original window title
 					window.setTitle("Beetle Pops a Manu!");
@@ -111,15 +124,15 @@ int main()
 			}
 
 			// Allow player input only while the level is still running
-			if (!levelCompleted)
+			if (gameState == GameState::Playing)
 			{
 				player.handleEvent(*event);
 			}
 		}
 
-		if (!levelCompleted)
+		// Update gameplay only while the player is still playing
+		if (gameState == GameState::Playing)
 		{
-
 			// Update the player's movement, physics, and collisions
 			player.update(
 				deltaTime,
@@ -127,43 +140,65 @@ int main()
 				window.getSize()
 			);
 
-			// Start at the first collectible in the vector
-			auto iterator{ collectibles.begin() };
+			// Check whether the player is touching the hazard
+			const auto hazardIntersection{
+				player.getBounds().findIntersection(
+					hazard.getGlobalBounds()
+				)
+			};
 
-			// Check every remaining collectible
-			while (iterator != collectibles.end())
+			// End the attempt when the player touches the hazard
+			if (hazardIntersection.has_value())
 			{
-				// Check whether the player overlaps this collectible
-				const auto intersection{
-					player.getBounds().findIntersection(
-						iterator->getGlobalBounds()
-					)
-				};
-
-				if (intersection.has_value())
-				{
-					// Remove the collected item and receive the next valid iterator
-					iterator = collectibles.erase(iterator);
-				}
-				else
-				{
-					// Move to the next collectible when nothing was erased
-					++iterator;
-				}
+				gameState = GameState::Dead;
+				window.setTitle("You died! Press R to restart");
 			}
 
-			// Complete the level once every collectible has been removed
-			if (collectibles.empty())
+			// Check collectibles only if the player survived this frame
+			if (gameState == GameState::Playing)
 			{
-				levelCompleted = true;
-				window.setTitle("Level complete!");
+				// Start at the first remaining collectible
+				auto iterator{ collectibles.begin() };
+
+				// Check every remaining collectible
+				while (iterator != collectibles.end())
+				{
+					// Check whether the player overlaps this collectible
+					const auto intersection{
+						player.getBounds().findIntersection(
+							iterator->getGlobalBounds()
+						)
+					};
+
+					if (intersection.has_value())
+					{
+						// Remove the item and receive the next valid iterator
+						iterator = collectibles.erase(iterator);
+					}
+					else
+					{
+						// Move forward when nothing was removed
+						++iterator;
+					}
+				}
+
+				// Complete the level after collecting every item
+				if (collectibles.empty())
+				{
+					gameState = GameState::Completed;
+					window.setTitle("Level complete!");
+				}
 			}
 		}
 
 		// Change the background colour after completing the level
-		if (levelCompleted)
+		if (gameState == GameState::Completed)
 		{
 			window.clear(sf::Color{ 30, 80, 50 });
+		}
+		else if (gameState == GameState::Dead)
+		{
+			window.clear(sf::Color{ 80, 20, 20 });
 		}
 		else
 		{
@@ -181,6 +216,9 @@ int main()
 		{
 			window.draw(collectible);
 		}
+
+		// Draw the dangerous area on the floor
+		window.draw(hazard);
 
 		// Draw the player after drawing the platforms
 		player.draw(window);
