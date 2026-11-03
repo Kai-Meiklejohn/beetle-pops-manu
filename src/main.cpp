@@ -78,9 +78,32 @@ int main()
 	platforms.back().setFillColor(sf::Color::Blue);
 
 	// Create a dangerous area on the floor
-	sf::RectangleShape hazard{ { 120.f, 20.f } };
+	sf::RectangleShape hazard{{ 120.f, 20.f }};
 	hazard.setPosition({ 350.f, 580.f });
 	hazard.setFillColor(sf::Color::Red);
+
+	// Create a pool on the right side of the level
+	sf::RectangleShape water{ { 200.f, 80.f } };
+	water.setPosition({ 570.f, 520.f });
+	water.setFillColor(sf::Color{ 30, 120, 220 });
+
+	// Create a white ring to represent a temporary splash
+	sf::CircleShape splash{ 35.f };
+	splash.setFillColor(sf::Color::Transparent);
+	splash.setOutlineColor(sf::Color::White);
+	splash.setOutlineThickness(3.f);
+
+	// Position the ring using its centre instead of its top-left corner
+	splash.setOrigin({ 35.f, 35.f });
+
+	// Remember whether the player overlapped the water last frame
+	bool wasInWater{ false };
+
+	// Track how long the splash should remain visible
+	float splashTimeRemaining{ 0.f };
+
+	// Specify how long each splash lasts, in seconds
+	constexpr float splashDuration{ 0.4f };
 
 	// Track elapsed time for frame-rate-independent movement
 	sf::Clock clock;
@@ -118,6 +141,12 @@ int main()
 					// Return the game to its playing state
 					gameState = GameState::Playing;
 
+					// Clear water-entry tracking for the new attempt
+					wasInWater = false;
+
+					// Remove any splash left over from the previous attempt
+					splashTimeRemaining = 0.f;
+
 					// Restore the original window title
 					window.setTitle("Beetle Pops a Manu!");
 				}
@@ -140,13 +169,50 @@ int main()
 				window.getSize()
 			);
 
+			// Count down the remaining splash duration
+			if (splashTimeRemaining > 0.f)
+			{
+				splashTimeRemaining -= deltaTime;
+			}
+
+			// Check whether the player currently overlaps the water
+			const bool isInWater{
+				player.getBounds().findIntersection(
+					water.getGlobalBounds()
+				).has_value()
+			};
+
+			// Trigger a splash only when entering the water
+			if (isInWater && !wasInWater)
+			{
+				// Start the splash timer
+				splashTimeRemaining = splashDuration;
+
+				// Get the player's current rectangular bounds
+				const auto playerBounds{ player.getBounds() };
+
+				// Find the player's horizontal centre
+				const float playerCentreX{
+					playerBounds.position.x + playerBounds.size.x / 2.f
+				};
+
+				// Place the splash at the water surface beneath the player
+				splash.setPosition({
+					playerCentreX,
+					water.getPosition().y
+					});
+			}
+
+			// Remember this frame's water state for the next frame
+			wasInWater = isInWater;
+
 			// Check whether the player is touching the hazard
 			const auto hazardIntersection{
 				player.getBounds().findIntersection(
 					hazard.getGlobalBounds()
 				)
 			};
-
+			
 			// End the attempt when the player touches the hazard
 			if (hazardIntersection.has_value())
 			{
@@ -205,6 +271,9 @@ int main()
 			window.clear(sf::Color::Black);
 		}
 
+		// Draw the pool behind the other level objects
+		window.draw(water);
+
 		// Draw every platform in the level
 		for (const auto& platform : platforms)
 		{
@@ -219,6 +288,12 @@ int main()
 
 		// Draw the dangerous area on the floor
 		window.draw(hazard);
+
+		// Draw the splash while its timer is active
+		if (splashTimeRemaining > 0.f)
+		{
+			window.draw(splash);
+		}
 
 		// Draw the player after drawing the platforms
 		player.draw(window);
