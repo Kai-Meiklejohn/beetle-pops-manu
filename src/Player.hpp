@@ -30,6 +30,9 @@ public:
 	// Return the rectangular area currently occupied by the player
 	sf::FloatRect getBounds() const;
 
+	// Return the player's current vertical speed
+	float getVerticalVelocity() const;
+
 private:
 	// The SFML shape currently used to represent the player
 	sf::CircleShape shape_;

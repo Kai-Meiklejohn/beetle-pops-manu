@@ -1,6 +1,7 @@
 #include <optional>
 #include <vector>
 #include <SFML/Graphics.hpp>
+#include <algorithm>
 
 #include "Player.hpp"
 
@@ -77,6 +78,11 @@ int main()
 	platforms.back().setPosition({ 100.f, 510.f });
 	platforms.back().setFillColor(sf::Color::Blue);
 
+	// Create and configure the fourth platform
+	platforms.emplace_back(sf::Vector2f{ 120.f, 20.f });
+	platforms.back().setPosition({ 350.f, 250.f });
+	platforms.back().setFillColor(sf::Color::Blue);
+
 	// Create a dangerous area on the floor
 	sf::RectangleShape hazard{{ 120.f, 20.f }};
 	hazard.setPosition({ 350.f, 580.f });
@@ -87,14 +93,19 @@ int main()
 	water.setPosition({ 570.f, 520.f });
 	water.setFillColor(sf::Color{ 30, 120, 220 });
 
+	// Specify the smallest and largest allowed splash radii
+	constexpr float minimumSplashRadius{ 25.f };
+	constexpr float maximumSplashRadius{ 90.f };
+
 	// Create a white ring to represent a temporary splash
-	sf::CircleShape splash{ 35.f };
+	sf::CircleShape splash{ minimumSplashRadius };
+	splash.setOrigin({
+		minimumSplashRadius,
+		minimumSplashRadius
+	});
 	splash.setFillColor(sf::Color::Transparent);
 	splash.setOutlineColor(sf::Color::White);
 	splash.setOutlineThickness(3.f);
-
-	// Position the ring using its centre instead of its top-left corner
-	splash.setOrigin({ 35.f, 35.f });
 
 	// Remember whether the player overlapped the water last frame
 	bool wasInWater{ false };
@@ -104,6 +115,9 @@ int main()
 
 	// Specify how long each splash lasts, in seconds
 	constexpr float splashDuration{ 0.4f };
+
+	// Control how strongly downward speed increases splash size
+	constexpr float splashSpeedScale{ 0.08f };
 
 	// Track elapsed time for frame-rate-independent movement
 	sf::Clock clock;
@@ -162,6 +176,11 @@ int main()
 		// Update gameplay only while the player is still playing
 		if (gameState == GameState::Playing)
 		{
+			// Record falling speed before collision handling can reset it
+			const float entryDownwardSpeed{
+				std::max(player.getVerticalVelocity(), 0.f)
+			};
+
 			// Update the player's movement, physics, and collisions
 			player.update(
 				deltaTime,
@@ -185,6 +204,20 @@ int main()
 			// Trigger a splash only when entering the water
 			if (isInWater && !wasInWater)
 			{
+				// Calculate splash size from the player's downward speed
+				const float splashRadius{
+					std::clamp(
+						minimumSplashRadius +
+							entryDownwardSpeed * splashSpeedScale,
+						minimumSplashRadius,
+						maximumSplashRadius
+					)
+				};
+
+				// Resize the splash and keep its origin at its centre
+				splash.setRadius(splashRadius);
+				splash.setOrigin({ splashRadius, splashRadius });
+
 				// Start the splash timer
 				splashTimeRemaining = splashDuration;
 
@@ -196,11 +229,11 @@ int main()
 					playerBounds.position.x + playerBounds.size.x / 2.f
 				};
 
-				// Place the splash at the water surface beneath the player
+				// Place the splash at the water surface
 				splash.setPosition({
 					playerCentreX,
 					water.getPosition().y
-					});
+				});
 			}
 
 			// Remember this frame's water state for the next frame

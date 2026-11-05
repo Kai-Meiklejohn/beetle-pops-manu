@@ -198,3 +198,8 @@ sf::FloatRect Player::getBounds() const
 {
 	return shape_.getGlobalBounds();
 }
+
+float Player::getVerticalVelocity() const
+{
+	return verticalVelocity_;
+}
